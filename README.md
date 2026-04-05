@@ -111,6 +111,17 @@ Transactions are stored in an array and updated dynamically. Whenever data chang
 * JavaScript
 * Chart.js
 
+## sample screenshots
+
+<img width="1919" height="832" alt="image" src="https://github.com/user-attachments/assets/d2769cc8-c10a-4673-b195-dd271f4055ac" />
+
+
+<img width="1888" height="480" alt="image" src="https://github.com/user-attachments/assets/8964c10c-5819-4879-ac90-c009d89a9846" />
+
+
+<img width="1896" height="923" alt="image" src="https://github.com/user-attachments/assets/ef8a5cad-6379-47fc-a577-e6e2f1f36ad9" />
+
+
 ## Author
 
 Chekka Vijaya Lakshmi
