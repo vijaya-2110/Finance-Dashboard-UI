@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #fff;
+}
+header {
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+}
+.container { padding: 20px; }
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+.card {
+    background: rgba(255,255,255,0.08);
+    padding: 20px;
+    border-radius: 15px;
+}
+.section { margin-top: 30px; }
+canvas {
+    width: 100% !important;
+    max-height: 350px;
+    background: rgba(255,255,255,0.08);
+    padding: 15px;
+    border-radius: 15px;
+}
+button { padding:8px; cursor:pointer; }
+table { width:100%; margin-top:10px; }
+th,td { padding:10px; }
+</style>
+</head>
+<body>
+<header>
+<h2>Finance Dashboard</h2>
+<select id="role">
+<option value="viewer">Viewer</option>
+<option value="admin">Admin</option>
+</select>
+</header>
+<div class="container">
+<div class="cards">
+<div class="card"><h3>Balance</h3><p id="balance"></p></div>
+<div class="card"><h3>Income</h3><p id="income"></p></div>
+<div class="card"><h3>Expense</h3><p id="expense"></p></div>
+</div>
+<div class="section"><canvas id="lineChart"></canvas></div>
+<div class="section">
+<h3>Transactions</h3>
+<input id="search" placeholder="Search">
+<select id="filter">
+<option value="all">All</option>
+<option value="income">Income</option>
+<option value="expense">Expense</option>
+</select>
+<div id="adminControls" style="display:none;">
+<input id="category" placeholder="Category">
+<input id="amount" type="number" placeholder="Amount">
+<select id="type">
+<option value="income">Income</option>
+<option value="expense">Expense</option>
+</select>
+<button onclick="addTransaction()">Add</button>
+</div>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Category</th>
+<th>Amount</th>
+<th>Type</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+<div class="section">
+<h3>Overview</h3>
+<canvas id="pieChart"></canvas>
+</div>
+<div class="section">
+<h3>Monthly Comparison</h3>
+<canvas id="monthlyChart"></canvas>
+</div>
+</div>
+<script>
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [
+{date:"2026-04-01", category:"Food", amount:500, type:"expense"},
+{date:"2026-04-02", category:"Salary", amount:5000, type:"income"},
+{date:"2026-04-03", category:"Shopping", amount:1000, type:"expense"}
+];
+let lineChartInstance, pieChartInstance, monthlyChartInstance;
+const role = document.getElementById("role");
+const adminControls = document.getElementById("adminControls");
+role.addEventListener("change", () => {
+    adminControls.style.display = role.value === "admin" ? "block" : "none";
+});
+function save(){
+localStorage.setItem("transactions",JSON.stringify(transactions));
+}
+function summary(){
+let inc=0,exp=0;
+transactions.forEach(t=> t.type==="income"?inc+=t.amount:exp+=t.amount);
+income.innerText=inc;
+expense.innerText=exp;
+balance.innerText=inc-exp;
+}
+function render(){
+let body=document.getElementById("tableBody");
+body.innerHTML="";
+transactions.forEach((t,i)=>{
+body.innerHTML+=`
+<tr>
+<td>${t.date}</td>
+<td>${t.category}</td>
+<td>${t.amount}</td>
+<td>${t.type}</td>
+<td><button onclick="del(${i})">Delete</button></td>
+</tr>`;
+});
+}
+function addTransaction(){
+let c=document.getElementById("category").value;
+let a=parseInt(document.getElementById("amount").value);
+let t=document.getElementById("type").value;
+if(c && a){
+transactions.push({
+date:new Date().toISOString().split('T')[0],
+category:c,
+amount:a,
+type:t
+});
+update();
+}
+}
+function del(i){
+transactions.splice(i,1);
+update();
+}
+function charts(){
+let labels=transactions.map(t=>t.date);
+let data=transactions.map(t=>t.amount);
+if(lineChartInstance) lineChartInstance.destroy();
+if(pieChartInstance) pieChartInstance.destroy();
+if(monthlyChartInstance) monthlyChartInstance.destroy();
+lineChartInstance = new Chart(lineChart,{
+type:"line",
+data:{labels,datasets:[{label:"Trend",data,borderColor:"#38bdf8"}]}
+});
+let inc=transactions.filter(t=>t.type==="income").reduce((a,b)=>a+b.amount,0);
+let exp=transactions.filter(t=>t.type==="expense").reduce((a,b)=>a+b.amount,0);
+pieChartInstance = new Chart(pieChart,{
+type:"pie",
+data:{labels:["Income","Expense"],datasets:[{data:[inc,exp]}]}
+});
+let monthly={};
+transactions.forEach(t=>{
+let m=t.date.slice(0,7);
+monthly[m]=(monthly[m]||0)+t.amount;
+});
+monthlyChartInstance = new Chart(monthlyChart,{
+type:"bar",
+data:{
+labels:Object.keys(monthly),
+datasets:[{label:"Monthly Spending",data:Object.values(monthly),backgroundColor:"#22c55e"}]
+}
+});
+}
+function update(){
+summary();
+render();
+save();
+charts();
+}
+update();
+</script>
+</body>
+</html>
